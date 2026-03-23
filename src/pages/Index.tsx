@@ -1,233 +1,92 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState } from "react";
 
-const sadPhrases = [
-  "Ой, не туда...",
-  "Подумай ещё раз!",
-  "Ты точно уверена?",
-  "Нет — это не вариант",
-  "Кнопка не для тебя",
-  "Попробуй другую!",
-  "Я тут не стою...",
-  "Ой-ой-ой...",
-  "Не смеши сердечко",
-  "Туда нельзя!",
+const feelings = [
+  { emoji: "🍞", title: "Моя булочка", text: "Мягкая, тёплая и такая родная — ты моя любимая булочка, от которой хочется никогда не уходить." },
+  { emoji: "👑", title: "Моя принцесса", text: "Ты настоящая принцесса — в каждом твоём жесте, улыбке и взгляде есть что-то волшебное и неповторимое." },
+  { emoji: "🌸", title: "Моя малышка", text: "Малышка моя — я хочу обнимать тебя и держать рядом. Ты делаешь мой мир уютнее и теплее." },
+  { emoji: "❤️", title: "Люблю больше всего на свете", text: "Ты — самое дорогое, что у меня есть. Я люблю тебя больше всего на свете, Аня." },
+  { emoji: "✨", title: "Ты моё всё", text: "Утром думаю о тебе. Днём скучаю. Вечером хочу быть рядом. Ты стала самой важной частью моей жизни." },
+  { emoji: "🌙", title: "Моя луна", text: "Даже в самые тёмные дни ты светишь мне — тихо, нежно и неизменно красиво. Ты мой свет." },
+  { emoji: "🦋", title: "Ты заставляешь сердце порхать", text: "Каждый раз, когда ты пишешь мне, внутри всё переворачивается от счастья. Это ты так делаешь." },
+  { emoji: "🏠", title: "Ты мой дом", text: "Не место, а человек — вот что такое дом. И мой дом — это ты, Аня. Всегда ты." },
+  { emoji: "🍓", title: "Сладкая моя", text: "Ты такая сладкая — добрая, нежная, лёгкая. Быть рядом с тобой — настоящее счастье и удовольствие." },
+  { emoji: "🌺", title: "Самая красивая", text: "Ты красивая не только снаружи — твоя душа, смех и забота делают тебя по-настоящему прекрасной." },
 ];
-
-const hearts = ["💙", "💫", "✨", "🌙", "⭐", "💎"];
-
-const slides = [
-  {
-    img: "https://cdn.poehali.dev/projects/8b7d49cd-5838-428c-b3f1-67a5e0a70351/bucket/1e3a2172-b75b-4a3f-af15-cf40307a9eea.jpg",
-    tag: "твои глаза",
-    title: "Я влюбляюсь в тебя снова",
-    text: "Каждый раз, когда ты смотришь на меня — эти тёмные глаза затягивают глубже, чем любой океан. В них я нашёл свой дом.",
-    accent: "#90caf9",
-  },
-  {
-    img: "https://cdn.poehali.dev/projects/8b7d49cd-5838-428c-b3f1-67a5e0a70351/bucket/0fc80c75-4e98-4856-89a6-0b4b8fd6fb55.jpg",
-    tag: "твоя улыбка",
-    title: "Я люблю тебя всё сильнее",
-    text: "Эти губы, этот пирсинг — детали, которые я замечаю и запоминаю. Ты неповторима. И я хочу целовать эту улыбку каждый день.",
-    accent: "#f48fb1",
-  },
-  {
-    img: "https://cdn.poehali.dev/projects/8b7d49cd-5838-428c-b3f1-67a5e0a70351/bucket/7fa39161-93c2-4749-82fd-3d417c63485e.jpg",
-    tag: "мы",
-    title: "Я люблю тебя больше всего на свете",
-    text: "Рядом с тобой я чувствую себя живым. Ты — моё любимое место во вселенной. Я хочу, чтобы таких моментов было бесконечно много.",
-    accent: "#a5d6a7",
-  },
-];
-
-function FloatingParticle({ style }: { style: React.CSSProperties }) {
-  return <div className="particle" style={style} />;
-}
 
 export default function Index() {
-  const [noPos, setNoPos] = useState({ x: 0, y: 0 });
-  const [phrase, setPhrase] = useState("");
-  const [phraseVisible, setPhraseVisible] = useState(false);
-  const [phrasePos, setPhrasePos] = useState({ x: 0, y: 0 });
-  const [screen, setScreen] = useState<"question" | "loved" | number>("question");
-  const [noCount, setNoCount] = useState(0);
-  const noRef = useRef<HTMLButtonElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const phraseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [opened, setOpened] = useState(false);
 
-  const particles = useRef(
-    Array.from({ length: 30 }, (_, i) => ({
-      id: i,
-      style: {
-        left: `${Math.random() * 100}%`,
-        top: `${Math.random() * 100}%`,
-        width: `${2 + Math.random() * 4}px`,
-        height: `${2 + Math.random() * 4}px`,
-        animationDelay: `${Math.random() * 4}s`,
-        animationDuration: `${3 + Math.random() * 4}s`,
-        opacity: 0.3 + Math.random() * 0.5,
-      } as React.CSSProperties,
-    }))
-  ).current;
-
-  const runAway = useCallback(
-    (e: React.MouseEvent | React.TouchEvent) => {
-      const container = containerRef.current;
-      const btn = noRef.current;
-      if (!container || !btn) return;
-
-      const rect = container.getBoundingClientRect();
-      const btnRect = btn.getBoundingClientRect();
-
-      let clientX: number, clientY: number;
-      if ("touches" in e) {
-        clientX = e.touches[0].clientX;
-        clientY = e.touches[0].clientY;
-      } else {
-        clientX = e.clientX;
-        clientY = e.clientY;
-      }
-
-      const btnCenterX = btnRect.left + btnRect.width / 2 - rect.left;
-      const btnCenterY = btnRect.top + btnRect.height / 2 - rect.top;
-      const mouseX = clientX - rect.left;
-      const mouseY = clientY - rect.top;
-
-      const dx = btnCenterX - mouseX;
-      const dy = btnCenterY - mouseY;
-      const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-
-      const pushX = (-dx / dist) * (120 + Math.random() * 100);
-      const pushY = (-dy / dist) * (120 + Math.random() * 100);
-
-      const maxX = rect.width - btnRect.width;
-      const maxY = rect.height - btnRect.height;
-
-      const newX = Math.min(Math.max(noPos.x + pushX, 0), maxX);
-      const newY = Math.min(Math.max(noPos.y + pushY, 0), maxY);
-
-      setNoPos({ x: newX, y: newY });
-
-      const idx = noCount % sadPhrases.length;
-      setPhrase(sadPhrases[idx]);
-      setPhrasePos({ x: newX + btnRect.width / 2, y: newY - 10 });
-      setPhraseVisible(true);
-      setNoCount((c) => c + 1);
-
-      if (phraseTimerRef.current) clearTimeout(phraseTimerRef.current);
-      phraseTimerRef.current = setTimeout(() => setPhraseVisible(false), 1500);
-    },
-    [noPos, noCount]
-  );
-
-  useEffect(() => {
-    return () => {
-      if (phraseTimerRef.current) clearTimeout(phraseTimerRef.current);
-    };
-  }, []);
-
-  if (typeof screen === "number") {
-    const slide = slides[screen];
-    const isLast = screen === slides.length - 1;
+  if (!opened) {
     return (
-      <div className="slide-screen" key={screen}>
-        {particles.map((p) => (
-          <FloatingParticle key={p.id} style={p.style} />
-        ))}
-        <div className="slide-inner">
-          <div className="slide-img-wrap">
-            <img src={slide.img} alt={slide.tag} className="slide-img" />
-            <div className="slide-img-overlay" style={{ background: `linear-gradient(to top, rgba(2,8,32,0.95) 0%, rgba(2,8,32,0.4) 60%, transparent 100%)` }} />
-          </div>
-          <div className="slide-text-block">
-            <span className="slide-tag" style={{ color: slide.accent, borderColor: slide.accent }}>
-              {slide.tag}
+      <div className="env-screen">
+        <div className="env-particles">
+          {Array.from({ length: 20 }).map((_, i) => (
+            <span key={i} className="env-particle" style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 5}s`,
+              animationDuration: `${4 + Math.random() * 4}s`,
+              fontSize: `${0.6 + Math.random() * 1}rem`,
+              opacity: 0.15 + Math.random() * 0.4,
+            }}>
+              {["💕","✨","🌸","💗","⭐","🌷"][Math.floor(Math.random() * 6)]}
             </span>
-            <h2 className="slide-title" style={{ textShadow: `0 0 40px ${slide.accent}80` }}>
-              {slide.title}
-            </h2>
-            <p className="slide-body">{slide.text}</p>
-            <button
-              className="slide-btn"
-              style={{ background: `linear-gradient(135deg, ${slide.accent}99, ${slide.accent}44)`, borderColor: `${slide.accent}66`, color: "#e3f2fd" }}
-              onClick={() => setScreen(isLast ? "loved" : screen + 1)}
-            >
-              {isLast ? "К началу 💙" : "Дальше →"}
-            </button>
-          </div>
+          ))}
         </div>
-      </div>
-    );
-  }
-
-  if (screen === "loved") {
-    return (
-      <div className="love-screen">
-        {particles.map((p) => (
-          <FloatingParticle key={p.id} style={p.style} />
-        ))}
-        <div className="love-content">
-          <div className="big-heart">💙</div>
-          <h1 className="love-title">Аня, я знал это!</h1>
-          <p className="love-subtitle">
-            Ты — моя вселенная, моё небо и мои звёзды.
-            <br />
-            Аня, я люблю тебя больше всех слов на свете 💙
-          </p>
-          <div className="hearts-row">
-            {hearts.map((h, i) => (
-              <span key={i} className="float-heart" style={{ animationDelay: `${i * 0.2}s` }}>
-                {h}
-              </span>
+        <div className="env-card">
+          <div className="env-glow" />
+          <div className="env-icon">💌</div>
+          <h1 className="env-title">Для Ани</h1>
+          <p className="env-sub">Здесь кое-что важное — нажми, чтобы открыть</p>
+          <button className="env-btn" onClick={() => setOpened(true)}>
+            Открыть
+          </button>
+          <div className="env-petals">
+            {["🌸","🌷","🌸","🌹","🌸","🌷","🌸"].map((p, i) => (
+              <span key={i} className="env-petal" style={{ animationDelay: `${i * 0.35}s` }}>{p}</span>
             ))}
           </div>
-          <button className="slide-btn slide-btn-center" onClick={() => setScreen(0)}>
-            Смотреть дальше ✨
-          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="main-screen" ref={containerRef}>
-      {particles.map((p) => (
-        <FloatingParticle key={p.id} style={p.style} />
-      ))}
+    <div className="feels-screen">
+      <div className="feels-bg-dots" />
+      <div className="feels-container">
+        <div className="feels-header">
+          <div className="feels-heart-icon">💝</div>
+          <h1 className="feels-title">Аня, вот что я чувствую к тебе</h1>
+          <p className="feels-subtitle">Читай медленно — каждое слово настоящее</p>
+        </div>
 
-      <div className="center-card">
-        <div className="card-glow" />
-        <div className="emoji-top">💙</div>
-        <h1 className="main-question">Аня, любишь ли ты меня?</h1>
-        <p className="sub-text">Подумай хорошенько перед ответом...</p>
+        <div className="feels-grid">
+          {feelings.map((f, i) => (
+            <div
+              key={i}
+              className="feel-card"
+              style={{ animationDelay: `${0.05 + i * 0.07}s` }}
+            >
+              <div className="feel-emoji">{f.emoji}</div>
+              <h2 className="feel-card-title">{f.title}</h2>
+              <p className="feel-card-text">{f.text}</p>
+            </div>
+          ))}
+        </div>
 
-        <div className="buttons-wrap">
-          <button className="btn-yes" onClick={() => setScreen("loved")}>
-            Да 💙
+        <div className="feels-footer">
+          <div className="feels-footer-hearts">
+            {["💕","💗","💖","💗","💕"].map((h, i) => (
+              <span key={i} className="feels-fheart" style={{ animationDelay: `${i * 0.2}s` }}>{h}</span>
+            ))}
+          </div>
+          <p className="feels-footer-text">Люблю тебя, Аня 🌸</p>
+          <button className="feels-back-btn" onClick={() => setOpened(false)}>
+            ← Вернуться к открытке
           </button>
         </div>
       </div>
-
-      {phraseVisible && (
-        <div className="sad-phrase" style={{ left: phrasePos.x, top: phrasePos.y }}>
-          {phrase}
-        </div>
-      )}
-
-      <button
-        ref={noRef}
-        className="btn-no"
-        style={{
-          position: "absolute",
-          left: noPos.x || "calc(50% + 100px)",
-          top: noPos.y || "calc(50% + 30px)",
-          transform: noPos.x ? "none" : "translateX(0)",
-        }}
-        onMouseEnter={runAway}
-        onTouchStart={runAway}
-        onClick={runAway}
-      >
-        Нет
-      </button>
     </div>
   );
 }
