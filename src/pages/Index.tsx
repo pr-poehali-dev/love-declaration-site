@@ -108,11 +108,11 @@ export default function Index() {
         ))}
         <div className="love-content">
           <div className="big-heart">💙</div>
-          <h1 className="love-title">Я знал это!</h1>
+          <h1 className="love-title">Аня, я знал это!</h1>
           <p className="love-subtitle">
             Ты — моя вселенная, моё небо и мои звёзды.
             <br />
-            Я люблю тебя больше всех слов на свете 💙
+            Аня, я люблю тебя больше всех слов на свете 💙
           </p>
           <div className="hearts-row">
             {hearts.map((h, i) => (
@@ -140,7 +140,7 @@ export default function Index() {
         <div className="card-glow" />
         <div className="emoji-top">💙</div>
         <h1 className="main-question">
-          Любишь ли ты меня?
+          Аня, любишь ли ты меня?
         </h1>
         <p className="sub-text">Подумай хорошенько перед ответом...</p>
 
