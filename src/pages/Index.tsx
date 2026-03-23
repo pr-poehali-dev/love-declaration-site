@@ -15,6 +15,30 @@ const sadPhrases = [
 
 const hearts = ["💙", "💫", "✨", "🌙", "⭐", "💎"];
 
+const slides = [
+  {
+    img: "https://cdn.poehali.dev/projects/8b7d49cd-5838-428c-b3f1-67a5e0a70351/bucket/1e3a2172-b75b-4a3f-af15-cf40307a9eea.jpg",
+    tag: "твои глаза",
+    title: "Я влюбляюсь в тебя снова",
+    text: "Каждый раз, когда ты смотришь на меня — эти тёмные глаза затягивают глубже, чем любой океан. В них я нашёл свой дом.",
+    accent: "#90caf9",
+  },
+  {
+    img: "https://cdn.poehali.dev/projects/8b7d49cd-5838-428c-b3f1-67a5e0a70351/bucket/0fc80c75-4e98-4856-89a6-0b4b8fd6fb55.jpg",
+    tag: "твоя улыбка",
+    title: "Я люблю тебя всё сильнее",
+    text: "Эти губы, этот пирсинг — детали, которые я замечаю и запоминаю. Ты неповторима. И я хочу целовать эту улыбку каждый день.",
+    accent: "#f48fb1",
+  },
+  {
+    img: "https://cdn.poehali.dev/projects/8b7d49cd-5838-428c-b3f1-67a5e0a70351/bucket/7fa39161-93c2-4749-82fd-3d417c63485e.jpg",
+    tag: "мы",
+    title: "Я люблю тебя больше всего на свете",
+    text: "Рядом с тобой я чувствую себя живым. Ты — моё любимое место во вселенной. Я хочу, чтобы таких моментов было бесконечно много.",
+    accent: "#a5d6a7",
+  },
+];
+
 function FloatingParticle({ style }: { style: React.CSSProperties }) {
   return <div className="particle" style={style} />;
 }
@@ -24,24 +48,26 @@ export default function Index() {
   const [phrase, setPhrase] = useState("");
   const [phraseVisible, setPhraseVisible] = useState(false);
   const [phrasePos, setPhrasePos] = useState({ x: 0, y: 0 });
-  const [loved, setLoved] = useState(false);
+  const [screen, setScreen] = useState<"question" | "loved" | number>("question");
   const [noCount, setNoCount] = useState(0);
   const noRef = useRef<HTMLButtonElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const phraseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const particles = Array.from({ length: 30 }, (_, i) => ({
-    id: i,
-    style: {
-      left: `${Math.random() * 100}%`,
-      top: `${Math.random() * 100}%`,
-      width: `${2 + Math.random() * 4}px`,
-      height: `${2 + Math.random() * 4}px`,
-      animationDelay: `${Math.random() * 4}s`,
-      animationDuration: `${3 + Math.random() * 4}s`,
-      opacity: 0.3 + Math.random() * 0.5,
-    } as React.CSSProperties,
-  }));
+  const particles = useRef(
+    Array.from({ length: 30 }, (_, i) => ({
+      id: i,
+      style: {
+        left: `${Math.random() * 100}%`,
+        top: `${Math.random() * 100}%`,
+        width: `${2 + Math.random() * 4}px`,
+        height: `${2 + Math.random() * 4}px`,
+        animationDelay: `${Math.random() * 4}s`,
+        animationDuration: `${3 + Math.random() * 4}s`,
+        opacity: 0.3 + Math.random() * 0.5,
+      } as React.CSSProperties,
+    }))
+  ).current;
 
   const runAway = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
@@ -82,8 +108,7 @@ export default function Index() {
       setNoPos({ x: newX, y: newY });
 
       const idx = noCount % sadPhrases.length;
-      const newPhrase = sadPhrases[idx];
-      setPhrase(newPhrase);
+      setPhrase(sadPhrases[idx]);
       setPhrasePos({ x: newX + btnRect.width / 2, y: newY - 10 });
       setPhraseVisible(true);
       setNoCount((c) => c + 1);
@@ -100,7 +125,41 @@ export default function Index() {
     };
   }, []);
 
-  if (loved) {
+  if (typeof screen === "number") {
+    const slide = slides[screen];
+    const isLast = screen === slides.length - 1;
+    return (
+      <div className="slide-screen" key={screen}>
+        {particles.map((p) => (
+          <FloatingParticle key={p.id} style={p.style} />
+        ))}
+        <div className="slide-inner">
+          <div className="slide-img-wrap">
+            <img src={slide.img} alt={slide.tag} className="slide-img" />
+            <div className="slide-img-overlay" style={{ background: `linear-gradient(to top, rgba(2,8,32,0.95) 0%, rgba(2,8,32,0.4) 60%, transparent 100%)` }} />
+          </div>
+          <div className="slide-text-block">
+            <span className="slide-tag" style={{ color: slide.accent, borderColor: slide.accent }}>
+              {slide.tag}
+            </span>
+            <h2 className="slide-title" style={{ textShadow: `0 0 40px ${slide.accent}80` }}>
+              {slide.title}
+            </h2>
+            <p className="slide-body">{slide.text}</p>
+            <button
+              className="slide-btn"
+              style={{ background: `linear-gradient(135deg, ${slide.accent}99, ${slide.accent}44)`, borderColor: `${slide.accent}66`, color: "#e3f2fd" }}
+              onClick={() => setScreen(isLast ? "loved" : screen + 1)}
+            >
+              {isLast ? "К началу 💙" : "Дальше →"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (screen === "loved") {
     return (
       <div className="love-screen">
         {particles.map((p) => (
@@ -116,15 +175,14 @@ export default function Index() {
           </p>
           <div className="hearts-row">
             {hearts.map((h, i) => (
-              <span
-                key={i}
-                className="float-heart"
-                style={{ animationDelay: `${i * 0.2}s` }}
-              >
+              <span key={i} className="float-heart" style={{ animationDelay: `${i * 0.2}s` }}>
                 {h}
               </span>
             ))}
           </div>
+          <button className="slide-btn slide-btn-center" onClick={() => setScreen(0)}>
+            Смотреть дальше ✨
+          </button>
         </div>
       </div>
     );
@@ -139,23 +197,18 @@ export default function Index() {
       <div className="center-card">
         <div className="card-glow" />
         <div className="emoji-top">💙</div>
-        <h1 className="main-question">
-          Аня, любишь ли ты меня?
-        </h1>
+        <h1 className="main-question">Аня, любишь ли ты меня?</h1>
         <p className="sub-text">Подумай хорошенько перед ответом...</p>
 
         <div className="buttons-wrap">
-          <button className="btn-yes" onClick={() => setLoved(true)}>
+          <button className="btn-yes" onClick={() => setScreen("loved")}>
             Да 💙
           </button>
         </div>
       </div>
 
       {phraseVisible && (
-        <div
-          className="sad-phrase"
-          style={{ left: phrasePos.x, top: phrasePos.y }}
-        >
+        <div className="sad-phrase" style={{ left: phrasePos.x, top: phrasePos.y }}>
           {phrase}
         </div>
       )}
